@@ -73,7 +73,7 @@ int main(int argc , char *argv[])
 		client_socket[i] = 0;
 	}
 
-	if( (master_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0)
+	if( (master_socket = socket(AF_INET , SOCK_STREAM , 0)) < 0)
 	{
 		perror("socket failed");
 		exit(EXIT_FAILURE);
@@ -190,10 +190,10 @@ int main(int argc , char *argv[])
 
                     if(msg_type==1){
                         std::cout<<"Message recieved from client: "<<sd<<" :"<<msg_body<<std::endl;
-                        // send(sd, "message recieved by server", 17, 0);
+                        send(sd, "message recieved by server", 27, 0);
                     }else if(msg_type==2){
                         std::cout<<"Acknowledgement recieved from client: "<<sd<<" "<<msg_body<<std::endl;
-                        // send(sd, "acknowledgement recieved", 25, 0);
+                        send(sd, "acknowledgement recieved", 25, 0);
                     }else if(msg_type==3){
                         std::cout<<"Received close communication from client: "<<sd<<" "<<msg_body<<std::endl;
                         close(sd);

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string>
@@ -99,6 +100,12 @@ int main(int argc, char *argv[]) {
 
         send(sock, formattedMessage, strlen(formattedMessage), 0);
         if(message[0]=='3') break;
+
+        char buffer[MSG_LEN];
+        int siz = recv(sock, buffer, MSG_LEN, 0);
+        if(siz>0){
+            std::cout<<"Acknowledgement recieved: "<<buffer<<std::endl;
+        }
     }
 
     close(sock);
