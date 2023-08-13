@@ -8,9 +8,13 @@
 #include <string>
 #include <iostream>
 
+void errorPrinter(std::string s){
+	std::cerr<<s<<std::endl;
+}
+
 int main(int argc, char* argv[]){
     if(argc!=3){
-        std::cerr<<"Usage: ./client <ip> <PORT>"<<std::endl;
+        errorPrinter("Usage: ./client <ip> <PORT>");
         return -1;
     }
 
@@ -20,7 +24,7 @@ int main(int argc, char* argv[]){
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if(sock<0){
-        std::cerr<<"Sock"<<std::endl;
+        errorPrinter("socket error");
         return -1;
     }
 
@@ -32,10 +36,10 @@ int main(int argc, char* argv[]){
 
     char buffer[MSG_LEN];
     while(1){
-        std::cout<<"Type an expression: ";
+        std::cout<<"Type an expression(-1 to exit): ";
         fgets(buffer, MSG_LEN, stdin);
 
-        if(strcmp(buffer, "/exit\n")==0){
+        if(strcmp(buffer, "-1\n")==0){
             break;
         }
 

@@ -7,10 +7,13 @@
 #include <string>
 #include <iostream>
 
+void errorPrinter(std::string s){
+	std::cerr<<s<<std::endl;
+}
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s <Server_IP_Address> <Server_Port_Number>\n", argv[0]);
+        errorPrinter("Usage: ./client <ip> <PORT>");
         return 1;
     }
 
@@ -20,7 +23,7 @@ int main(int argc, char *argv[]) {
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
-        perror("socket");
+        errorPrinter("socket error");
         return 1;
     }
 
@@ -30,7 +33,7 @@ int main(int argc, char *argv[]) {
     serverAddr.sin_addr.s_addr = inet_addr(serverIP);
 
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
-        perror("connect");
+        errorPrinter("connect error");
         return 1;
     }
 
@@ -40,16 +43,16 @@ int main(int argc, char *argv[]) {
     std::cout<<buffer<<std::endl;
     if (bytesRead > 0) {
         buffer[bytesRead] = '\0';
-        printf("Server Acknowledgment: %s\n", buffer);
+        std::cout<<"Server acknowledgement: "<<buffer<<std::endl;
     }
 
     bool first=true;
     while (1) {
         char message[MSG_LEN];
-        printf("Enter an expression: ");
+        printf("Enter an expression(-1 to exit): ");
         fgets(message, MSG_LEN, stdin);
 
-        if(strcmp(message, "/exit\n")==0){
+        if(strcmp(message, "-1\n")==0){
             break;
         }
 
@@ -65,7 +68,7 @@ int main(int argc, char *argv[]) {
     }
 
     close(sock);
-    printf("Connection closed\n");
+    std::cout<<"Connection closed"<<std::endl;
 
     return 0;
 }

@@ -48,6 +48,9 @@ std::string b64decode(char* data, const size_t len)
     return str;
 }
 
+void errorPrinter(std::string s){
+	std::cerr<<s<<std::endl;
+}
 	
 int main(int argc , char *argv[])
 {
@@ -56,9 +59,7 @@ int main(int argc , char *argv[])
     
     int max_clients = 30;
 	
-    int opt=1;
-	int master_socket , addrlen , new_socket , client_socket[max_clients] ,
-		activity, i , valread , sd;
+	int master_socket, addrlen, new_socket, client_socket[max_clients],activity,i ,valread ,sd;
 	int max_sd;
 	struct sockaddr_in address;
 		
@@ -75,14 +76,7 @@ int main(int argc , char *argv[])
 
 	if( (master_socket = socket(AF_INET , SOCK_STREAM , 0)) < 0)
 	{
-		perror("socket failed");
-		exit(EXIT_FAILURE);
-	}
-	
-	if( setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt,
-		sizeof(opt)) < 0 )
-	{
-		perror("setsockopt error");
+		errorPrinter("socket error");
 		exit(EXIT_FAILURE);
 	}
 	
@@ -93,14 +87,14 @@ int main(int argc , char *argv[])
 
 	if (bind(master_socket, (struct sockaddr *)&address, sizeof(address))<0)
 	{
-		perror("bind failed");
+		errorPrinter("bind error");
 		exit(EXIT_FAILURE);
 	}
 	std::cout<<"Server on Port: "<<PORT<<std::endl;
 		
 	if (listen(master_socket, 3) < 0)
 	{
-		perror("listen error");
+		errorPrinter("listen error");
 		exit(EXIT_FAILURE);
 	}
 
@@ -137,7 +131,7 @@ int main(int argc , char *argv[])
 			if ((new_socket = accept(master_socket,
 					(struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
 			{
-				perror("accept");
+				errorPrinter("select error");
 				exit(EXIT_FAILURE);
 			}
 			
@@ -145,18 +139,15 @@ int main(int argc , char *argv[])
 		
 			if( send(new_socket, message, strlen(message), 0) != strlen(message) )
 			{
-				perror("send");
+				errorPrinter("send error");
 			}
-				
-			puts("msg sent");
 
 			for (i = 0; i < max_clients; i++)
 			{
 				if( client_socket[i] == 0 )
 				{
 					client_socket[i] = new_socket;
-					printf("Adding to list of sockets as %d\n" , i);
-						
+					std::cout<<"Added socket to list at index: "<<i<<std::endl;
 					break;
 				}
 			}

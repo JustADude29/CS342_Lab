@@ -1,73 +1,32 @@
+#include <cstddef>
+#include <iterator>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string>
 #include <iostream>
 
-static const unsigned char base64_table[65] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-char* base64_encode(unsigned char *src, size_t len) {
-    unsigned char *out, *pos;
-    const unsigned char *end, *in;
-
-    size_t olen;
-
-    olen = 4*((len + 2) / 3);
-
-    char* outStr=new char[0];
-
-    if (olen < len)
-        return NULL;
-
-    outStr = new char[olen];
-    out = (unsigned char*)&outStr[0];
-
-    end = src + len;
-    in = src;
-    pos = out;
-    while (end - in >= 3) {
-        *pos++ = base64_table[in[0] >> 2];
-        *pos++ = base64_table[((in[0] & 0x03) << 4) | (in[1] >> 4)];
-        *pos++ = base64_table[((in[1] & 0x0f) << 2) | (in[2] >> 6)];
-        *pos++ = base64_table[in[2] & 0x3f];
-        in += 3;
-    }
-
-    if (end - in) {
-        *pos++ = base64_table[in[0] >> 2];
-        if (end - in == 1) {
-            *pos++ = base64_table[(in[0] & 0x03) << 4];
-            *pos++ = '=';
-        }
-        else {
-            *pos++ = base64_table[((in[0] & 0x03) << 4) |
-                (in[1] >> 4)];
-            *pos++ = base64_table[(in[1] & 0x0f) << 2];
-        }
-        *pos++ = '=';
-    }
-
-    return outStr;
-}
+#define LOG(x) std::cout<<x<<std::endl;
 
 #define MSG_LEN 1024
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s <Server_IP_Address> <Server_Port_Number>\n", argv[0]);
-        return 1;
+        std::cerr<<"Usage: ./client <ip> <PORT>"<<std::endl;
+        return -1;
     }
 
     const char *serverIP = argv[1];
     int serverPort = atoi(argv[2]);
+    fd_set readfds;
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
-        perror("socket");
+        std::cerr<<"socket error"<<std::endl;
         return 1;
     }
 
@@ -77,7 +36,7 @@ int main(int argc, char *argv[]) {
     serverAddr.sin_addr.s_addr = inet_addr(serverIP);
 
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
-        perror("connect");
+        std::cerr<<"Connect error"<<std::endl;
         return 1;
     }
 
@@ -87,33 +46,40 @@ int main(int argc, char *argv[]) {
     std::cout<<buffer<<std::endl;
     if (bytesRead > 0) {
         buffer[bytesRead] = '\0';
-        printf("Server Acknowledgment: %s\n", buffer);
+        std::cout<<"Server acknowledgement: "<<buffer<<std::endl;
     }
 
     bool first=true;
     while (1) {
-        if(!first){
-            char buffer[MSG_LEN];
-            int siz = recv(sock, buffer, MSG_LEN, 0);
-            if(siz>0){
-                std::cout<<buffer<<std::endl;
-            }
-        }else{
-            first = false;
+        FD_ZERO(&readfds);
+        FD_SET(sock, &readfds);
+        FD_SET(STDIN_FILENO, &readfds);
+
+        int act = select(sock+1, &readfds, NULL, NULL, NULL);
+
+        if(act<0){
+            std::cerr<<"select error"<<std::endl;
         }
 
-        char message[MSG_LEN];
-        printf("Enter a message, format:<msg_type> <msg>: ");
-        fgets(message, MSG_LEN, stdin);
+        if(FD_ISSET(STDIN_FILENO, &readfds)){
+            int siz = read(STDIN_FILENO,  buffer, MSG_LEN);
+            if(strcmp(buffer, "/exit\n")==0) break;
+            buffer[siz]='\0';
+            send(sock, buffer, strlen(buffer), 0);
+            LOG("sent");
+        }
 
-
-        send(sock, message, strlen(message), 0);
-        if(message[0]=='3') break;
-
+        else {
+            int siz = read(sock, buffer, MSG_LEN);
+            buffer[siz]='\0';
+            if(siz>0){
+                LOG(buffer);
+            }else break;
+        }
     }
 
     close(sock);
-    printf("Connection closed\n");
+    std::cout<<"connection closed"<<std::endl;
 
     return 0;
 }
