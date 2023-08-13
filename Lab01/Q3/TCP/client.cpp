@@ -92,24 +92,23 @@ int main(int argc, char *argv[]) {
 
     bool first=true;
     while (1) {
-        if(!first){
-            char buffer[MSG_LEN];
-            int siz = recv(sock, buffer, MSG_LEN, 0);
-            if(siz>0){
-                std::cout<<buffer<<std::endl;
-            }
-        }else{
-            first = false;
-        }
-
         char message[MSG_LEN];
-        printf("Enter a message, format:<msg_type> <msg>: ");
+        printf("Enter an expression: ");
         fgets(message, MSG_LEN, stdin);
 
+        if(strcmp(message, "/exit\n")==0){
+            break;
+        }
 
         send(sock, message, strlen(message), 0);
-        if(message[0]=='3') break;
-
+        
+        std::cout<<"Result: ";
+        char buff[MSG_LEN];
+        int n = recv(sock, buff, MSG_LEN, 0);
+        if(n>0){
+            buff[n]='\0';
+            std::cout<<buff<<std::endl;
+        }
     }
 
     close(sock);

@@ -1,3 +1,4 @@
+#include <cmath>
 #include <ostream>
 #include <stdio.h>
 #include <string.h>
@@ -13,6 +14,50 @@
 #include <sys/time.h>
 #include <iostream>
 
+char* resulter(char* s){
+    std::string str = s;
+
+    std::string s1, s2;
+    char op;
+    bool neg1=false, neg2=false;
+    int i=0;
+    if(str[0]=='-') {neg1=true;i++;}
+
+
+
+    bool first=true;
+    while(i<str.size()){
+        if((str[i]=='*' || str[i]=='/' || str[i]=='+' || str[i]=='-' || str[i]=='^') && first){
+            op = str[i];
+            i++;
+            first=false;
+            continue;
+        }
+        if(first){
+            s1.push_back(str[i]);
+            i++; continue;
+        }else{
+            if(str[i]=='-') {neg2=true; i++; continue;}
+            s2.push_back(str[i]);
+            i++;
+        }
+    }
+    int i1 = std::stoi(s1);
+    int i2 = std::stoi(s2);
+    if(neg1) i1=i1*-1;
+    if(neg2) i2=i2*-1;
+    int res=0;
+    if(op=='*') res = i1*i2;
+    if(op=='/') res = i1/i2;
+    if(op=='+') res = i1+i2;
+    if(op=='-') res = i1-i2;
+    if(op=='^') res = std::pow(i1,i2);
+
+    std::string result = std::to_string(res);
+    char* r = new char(result.size());
+    for(int i=0; i<result.size(); i++) r[i]=result[i];
+    return r;
+}
 	
 int main(int argc , char *argv[])
 {
@@ -127,45 +172,14 @@ int main(int argc , char *argv[])
 				}
 
 				else{
-                    // buffer[valread]='\0';
-                    // std::string res = buffer;
-                    // char* decoded_msg = new char[res.size()];
-                    // for(int j=0; j<res.size(); j++) decoded_msg[i]=res[i];
-                    
-                    // int msg_type = res[0]-'0';
-                    // std::cout<<msg_type<<std::endl;
-                    // std::string msg_body;
-                    // for(int j=2; j<res.size(); j++) msg_body.push_back(res[j]);
-
-                    // if(msg_type==1){
-                    //     std::cout<<"Message recieved from client: "<<sd<<" :"<<msg_body<<std::endl;
-                    //     // send(sd, "message recieved by server", 27, 0);
-                    // }else if(msg_type==2){
-                    //     std::cout<<"Acknowledgement recieved from client: "<<sd<<" "<<msg_body<<std::endl;
-                    //     // send(sd, "acknowledgement recieved", 25, 0);
-                    // }else if(msg_type==3){
-                    //     std::cout<<"Received close communication from client: "<<sd<<" "<<msg_body<<std::endl;
-                    //     close(sd);
-                    //     client_socket[i]=0;
-                    // }
-					buffer[valread] = '\0';
-					std::cout<<buffer<<std::endl;
+                    buffer[valread] = '\0';
+                    char* res = resulter(buffer);
+                    // sprintf(res, "Result: %s", res);
+                    // std::cout<<res<<std::endl;
+                    send(sd, res, strlen(res), 0);
 				}
 			}
 
-		}
-		if(!first){
-			char* buffer;
-			std::cin>>buffer;
-
-			for(int i=0; i<max_clients; i++){
-				sd = client_socket[i];
-				if(FD_ISSET(sd, &readfds)){
-					send(sd, buffer, strlen(buffer), 0);
-				}
-			}
-		}else{
-			first = false;
 		}
 	}
 		
