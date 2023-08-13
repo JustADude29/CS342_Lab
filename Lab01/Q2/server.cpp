@@ -14,11 +14,16 @@
 #include <iostream>
 
 #define LOG(x) std::cout<<x<<std::endl;
+#define COLOR_RED "\033[1;31m"
+#define COLOR_GREEN "\033[1;32m"
+#define COLOR_YELLOW "\033[1;33m"
+#define COLOR_BLUE "\033[1;34m"
+#define COLOR_RESET "\033[0m"
 	
 int main(int argc , char *argv[])
 {
 	if(argc!=2){
-		std::cerr<<"Usage: ./server <PORT>"<<std::endl;
+		std::cerr<<COLOR_RED<<"Usage: ./server <PORT>"<<COLOR_RESET<<std::endl;
 		return -1;
 	}
     uint PORT = std::stoi(argv[1]);
@@ -41,7 +46,7 @@ int main(int argc , char *argv[])
 	}
 
 	if((master_socket = socket(AF_INET , SOCK_STREAM , 0)) < 0){
-		std::cerr<<"socket error"<<std::endl;
+		std::cerr<<COLOR_RED<<"socket error"<<COLOR_RESET<<std::endl;
 		return -1;
 	}
 	
@@ -50,18 +55,18 @@ int main(int argc , char *argv[])
 	address.sin_port = htons( PORT );
 
 	if(bind(master_socket, (struct sockaddr *)&address, sizeof(address))<0){
-		std::cerr<<"bind error"<<std::endl;
+		std::cerr<<COLOR_RED<<"bind error"<<COLOR_RESET<<std::endl;
 		return -1;
 	}
-	std::cout<<"Server on Port: "<<PORT<<std::endl;
+	std::cout<<COLOR_YELLOW<<"Server on Port: "<<PORT<<COLOR_RESET<<std::endl;
 		
 	if(listen(master_socket, 20) < 0){
-		std::cerr<<"listen error"<<std::endl;
+		std::cerr<<COLOR_RED<<"listen error"<<COLOR_RESET<<std::endl;
 		return -1;
 	}
 
 	addrlen = sizeof(address);
-	std::cout<<"Waiting for connections"<<std::endl;
+	std::cout<<COLOR_BLUE<<"Waiting for connections"<<COLOR_RESET<<std::endl;
 		
 	bool first = true;
 	while(1){
@@ -84,15 +89,16 @@ int main(int argc , char *argv[])
 		activity = select( max_sd + 1 , &readfds , NULL , NULL , NULL);
 	
 		if ((activity < 0) && (errno!=EINTR)){
-			std::cout<<"select error"<<std::endl;
+			std::cout<<COLOR_RED<<"select error"<<COLOR_RESET<<std::endl;
 		}
 
 		if(FD_ISSET(STDIN_FILENO, &readfds)){
 			valread = read(STDIN_FILENO, buffer, MSG_LEN);
+			if(strcmp(buffer, "/exit\n")==0) break;
 			buffer[valread]='\0';
 			sd = client_socket[(int)(buffer[0]-'0')];
 			if(sd==0){
-				LOG("No user with id "  +  buffer[0]);
+				LOG(COLOR_RED + std::string("No user with id") + std::to_string(buffer[0]-'0') + COLOR_RESET);
 			}else{
 				send(sd, buffer, strlen(buffer), 0);
 			}
@@ -102,20 +108,20 @@ int main(int argc , char *argv[])
 		if (FD_ISSET(master_socket, &readfds)){
 			if ((new_socket = accept(master_socket,
 					(struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0){
-				std::cerr<<"accept error"<<std::endl;
+				std::cerr<<COLOR_RED<<"accept error"<<COLOR_RESET<<std::endl;
 				return -1;
 			}
 			
-            std::cout<<"New connection: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<std::endl;
+            std::cout<<COLOR_YELLOW<<"New connection: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<COLOR_RESET<<std::endl;
 		
 			if( send(new_socket, message, strlen(message), 0) != strlen(message) ){
-				std::cerr<<"send error"<<std::endl;
+				std::cerr<<COLOR_RED<<"send error"<<COLOR_RESET<<std::endl;
 			}
 
 			for (i = 0; i < max_clients; i++){
 				if( client_socket[i] == 0 ){
 					client_socket[i] = new_socket;
-					std::cout<<"Adding to socket list at: "	<<i<<std::endl;
+					std::cout<<COLOR_BLUE<<"Adding to socket list at: "	<<i<<COLOR_RESET<<std::endl;
 					break;
 				}
 			}
@@ -127,14 +133,15 @@ int main(int argc , char *argv[])
 			if (FD_ISSET( sd , &readfds)){
 				if ((valread = read( sd , buffer, 1024)) == 0){
 					getpeername(sd , (struct sockaddr*)&address , (socklen_t*)&addrlen);
-                    std::cout<<"Host disconnected: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<std::endl;
+                    std::cout<<COLOR_BLUE<<"Host disconnected: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<COLOR_RESET<<std::endl;
 					close( sd );
 					client_socket[i] = 0;
 				}
 
 				else{
 					buffer[valread] = '\0';
-					std::cout<<buffer<<std::endl;
+					std::cout<<COLOR_BLUE<<"Recieved message: "<<COLOR_RESET<<COLOR_GREEN<<buffer<<COLOR_RESET;
+					std::cout<<COLOR_RESET;
 				}
 			}
 
