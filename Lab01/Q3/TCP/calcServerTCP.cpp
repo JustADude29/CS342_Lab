@@ -14,6 +14,12 @@
 #include <sys/time.h>
 #include <iostream>
 
+#define COLOR_RED "\033[1;31m"
+#define COLOR_GREEN "\033[1;32m"
+#define COLOR_YELLOW "\033[1;33m"
+#define COLOR_BLUE "\033[1;34m"
+#define COLOR_RESET "\033[0m"
+
 char* resulter(char* s){
     std::string str = s;
 
@@ -90,7 +96,7 @@ bool isValidExpression(std::string &str) {
 }
 
 void errorPrinter(std::string s){
-	std::cerr<<s<<std::endl;
+	std::cerr<<COLOR_RED<<s<<COLOR_RESET<<std::endl;
 }
 
 int main(int argc , char *argv[])
@@ -132,7 +138,7 @@ int main(int argc , char *argv[])
 		errorPrinter("bind error");
 		return -1;
 	}
-	std::cout<<"Server on Port: "<<PORT<<std::endl;
+	std::cout<<COLOR_YELLOW"Server on Port: "<<PORT<<COLOR_RESET<<std::endl;
 		
 	if (listen(master_socket, 20) < 0){
 		errorPrinter("listen error");
@@ -140,7 +146,7 @@ int main(int argc , char *argv[])
 	}
 
 	addrlen = sizeof(address);
-	std::cout<<"Waiting for connections"<<std::endl;
+	std::cout<<COLOR_BLUE<<"Waiting for connections"<<COLOR_RESET<<std::endl;
 		
 	bool first = true;
 	while(1){
@@ -162,7 +168,7 @@ int main(int argc , char *argv[])
 		activity = select( max_sd + 1 , &readfds , NULL , NULL , NULL);
 	
 		if ((activity < 0) && (errno!=EINTR)){
-			std::cout<<"select error"<<std::endl;
+			errorPrinter("Select error");
 		}
 
 		if (FD_ISSET(master_socket, &readfds)){
@@ -171,18 +177,16 @@ int main(int argc , char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			
-            std::cout<<"New connection: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<std::endl;
+            std::cout<<COLOR_YELLOW<<"New connection: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<COLOR_RESET<<std::endl;
 		
 			if(send(new_socket, message, strlen(message), 0) != strlen(message) ){
 				errorPrinter("send error");
 			}
-				
-			puts("msg sent");
 
 			for(i = 0; i < max_clients; i++){
 				if( client_socket[i] == 0 ){
 					client_socket[i] = new_socket;
-					std::cout<<"Adding socket to list at index: "<<i<<std::endl;
+					std::cout<<COLOR_BLUE<<"Adding socket to list at index: "<<i<<COLOR_RESET<<std::endl;
 					break;
 				}
 			}
@@ -194,14 +198,14 @@ int main(int argc , char *argv[])
 			if (FD_ISSET( sd , &readfds)){
 				if ((valread = read( sd , buffer, 1024)) == 0){
 					getpeername(sd , (struct sockaddr*)&address , (socklen_t*)&addrlen);
-                    std::cout<<"Host disconnected: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<std::endl;
+                    std::cout<<COLOR_RED<<"Host disconnected: "<<i<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<COLOR_RESET<<std::endl;
 					close( sd );
 					client_socket[i] = 0;
 				}
 
 				else{
                     buffer[valread] = '\0';
-					std::cout<<"Recieved expression: "<<buffer<<"from: "<<sd<<std::endl;
+					std::cout<<COLOR_BLUE<<"Recieved expression: "<<COLOR_YELLOW<<buffer<<COLOR_BLUE"from client: "<<COLOR_YELLOW<<i<<COLOR_RESET<<std::endl;
 					std::string exp = buffer;
 					if(isValidExpression(exp)){
 						char* res = resulter(buffer);

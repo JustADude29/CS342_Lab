@@ -7,8 +7,14 @@
 #include <string>
 #include <iostream>
 
+#define COLOR_RED "\033[1;31m"
+#define COLOR_GREEN "\033[1;32m"
+#define COLOR_YELLOW "\033[1;33m"
+#define COLOR_BLUE "\033[1;34m"
+#define COLOR_RESET "\033[0m"
+
 void errorPrinter(std::string s){
-	std::cerr<<s<<std::endl;
+	std::cerr<<COLOR_RED<<s<<COLOR_RESET<<std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -37,20 +43,20 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    printf("Connected to server\n");
     char buffer[MSG_LEN];
     int bytesRead = recv(sock, buffer, sizeof(buffer), 0);
-    std::cout<<buffer<<std::endl;
     if (bytesRead > 0) {
         buffer[bytesRead] = '\0';
-        std::cout<<"Server acknowledgement: "<<buffer<<std::endl;
+        std::cout<<COLOR_YELLOW<<"Server acknowledgement: "<<buffer<<COLOR_RESET<<std::endl;
     }
+    std::cout<<COLOR_BLUE<<"Connected to server"<<COLOR_RESET<<std::endl;
 
     bool first=true;
     while (1) {
         char message[MSG_LEN];
-        printf("Enter an expression(-1 to exit): ");
+        std::cout<<COLOR_YELLOW<<"Enter an expression(usage: <num1> <op> <num2>, -1 to exit): "<<COLOR_GREEN;
         fgets(message, MSG_LEN, stdin);
+        std::cout<<COLOR_RESET<<std::endl;
 
         if(strcmp(message, "-1\n")==0){
             break;
@@ -58,17 +64,18 @@ int main(int argc, char *argv[]) {
 
         send(sock, message, strlen(message), 0);
         
-        std::cout<<"Result: ";
+        std::cout<<COLOR_BLUE<<"Result: ";
         char buff[MSG_LEN];
         int n = recv(sock, buff, MSG_LEN, 0);
         if(n>0){
             buff[n]='\0';
-            std::cout<<buff<<std::endl;
+            std::cout<<COLOR_GREEN<<buff<<COLOR_RESET<<std::endl;
+            std::cout<<std::endl;
         }
     }
 
     close(sock);
-    std::cout<<"Connection closed"<<std::endl;
+    std::cout<<COLOR_RED<<"Connection closed"<<COLOR_RESET<<std::endl;
 
     return 0;
 }

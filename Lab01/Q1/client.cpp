@@ -7,6 +7,12 @@
 #include <string>
 #include <iostream>
 
+#define COLOR_RED "\033[1;31m"
+#define COLOR_GREEN "\033[1;32m"
+#define COLOR_YELLOW "\033[1;33m"
+#define COLOR_BLUE "\033[1;34m"
+#define COLOR_RESET "\033[0m"
+
 static const unsigned char base64_table[65] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -56,13 +62,13 @@ char* base64_encode(unsigned char *src, size_t len)
 }
 
 void errorPrinter(std::string s){
-	std::cerr<<s<<std::endl;
+	std::cerr<<COLOR_RED<<s<<COLOR_RESET<<std::endl;
 }
 
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s <Server_IP_Address> <Server_Port_Number>\n", argv[0]);
+        errorPrinter("Usage: ./client <ip> <PORT>");
         return 1;
     }
 
@@ -86,18 +92,18 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    printf("Connected to server\n");
     char buffer[MSG_LEN];
     int bytesRead = recv(sock, buffer, sizeof(buffer), 0);
     std::cout<<buffer<<std::endl;
     if (bytesRead > 0) {
         buffer[bytesRead] = '\0';
-        std::cout<<"Acknowledgement recieved: "<<buffer<<std::endl;
+        std::cout<<COLOR_YELLOW<<"Acknowledgement recieved: "<<buffer<<COLOR_RESET<<std::endl;
     }
+    std::cout<<COLOR_BLUE<<"Connected to server"<<COLOR_RESET<<std::endl;
 
     while (1) {
         char message[MSG_LEN];
-        std::cout<<"Enter a message, format:<msg_type> <msg>: "<<std::endl;
+        std::cout<<COLOR_YELLOW<<"Enter a message, format:<msg_type> <msg>: "<<COLOR_RESET<<std::endl;
         fgets(message, MSG_LEN, stdin);
 
         char *formattedMessage = base64_encode((unsigned char *)message, strlen(message));
@@ -108,7 +114,7 @@ int main(int argc, char *argv[]) {
         char buffer[MSG_LEN];
         int siz = recv(sock, buffer, MSG_LEN, 0);
         if(siz>0){
-            std::cout<<"Acknowledgement recieved: "<<buffer<<std::endl;
+            std::cout<<COLOR_BLUE<<"Acknowledgement recieved: "<<buffer<<COLOR_RESET<<std::endl;
         }
     }
 

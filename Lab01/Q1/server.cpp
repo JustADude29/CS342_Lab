@@ -12,6 +12,12 @@
 #include <sys/time.h>
 #include <iostream>
 
+#define COLOR_RED "\033[1;31m"
+#define COLOR_GREEN "\033[1;32m"
+#define COLOR_YELLOW "\033[1;33m"
+#define COLOR_BLUE "\033[1;34m"
+#define COLOR_RESET "\033[0m"
+
 static const int B64index[256] = { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 62, 63, 62, 62, 63, 52, 53, 54, 55,
@@ -49,12 +55,16 @@ std::string b64decode(char* data, const size_t len)
 }
 
 void errorPrinter(std::string s){
-	std::cerr<<s<<std::endl;
+	std::cerr<<COLOR_RED<<s<<COLOR_RESET<<std::endl;
 }
 	
 int main(int argc , char *argv[])
 {
-    uint PORT = std::stoi(argv[2]);
+	if(argc!=2){
+		errorPrinter("Usage: ./server <PORT>");
+		return -1;
+	}
+    uint PORT = std::stoi(argv[1]);
     uint MSG_LEN=1024;
     
     int max_clients = 30;
@@ -77,29 +87,28 @@ int main(int argc , char *argv[])
 	if( (master_socket = socket(AF_INET , SOCK_STREAM , 0)) < 0)
 	{
 		errorPrinter("socket error");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	
 	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = inet_addr(argv[1]);
-    std::cout<<"ip: "<<address.sin_addr.s_addr<<std::endl;
+	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons( PORT );
 
 	if (bind(master_socket, (struct sockaddr *)&address, sizeof(address))<0)
 	{
 		errorPrinter("bind error");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
-	std::cout<<"Server on Port: "<<PORT<<std::endl;
+	std::cout<<COLOR_BLUE<<"Server on Port: "<<PORT<<COLOR_RESET<<std::endl;
 		
 	if (listen(master_socket, 3) < 0)
 	{
 		errorPrinter("listen error");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
 	addrlen = sizeof(address);
-	std::cout<<"Waiting for connections"<<std::endl;
+	std::cout<<COLOR_BLUE<<"Waiting for connections"<<COLOR_RESET<<std::endl;
 		
 	
 	while(1){
@@ -123,7 +132,7 @@ int main(int argc , char *argv[])
 	
 		if ((activity < 0) && (errno!=EINTR))
 		{
-			std::cout<<"select error"<<std::endl;
+			errorPrinter("select error");
 		}
 
 		if (FD_ISSET(master_socket, &readfds))
@@ -131,11 +140,11 @@ int main(int argc , char *argv[])
 			if ((new_socket = accept(master_socket,
 					(struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
 			{
-				errorPrinter("select error");
-				exit(EXIT_FAILURE);
+				errorPrinter("accept error");
+				return -1;
 			}
 			
-            std::cout<<"New connection: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<std::endl;
+            std::cout<<COLOR_YELLOW<<"New connection: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<COLOR_RESET<<std::endl;
 		
 			if( send(new_socket, message, strlen(message), 0) != strlen(message) )
 			{
@@ -147,7 +156,7 @@ int main(int argc , char *argv[])
 				if( client_socket[i] == 0 )
 				{
 					client_socket[i] = new_socket;
-					std::cout<<"Added socket to list at index: "<<i<<std::endl;
+					std::cout<<COLOR_BLUE<<"Added socket to list at index: "<<i<<COLOR_YELLOW<<std::endl;
 					break;
 				}
 			}
@@ -162,7 +171,7 @@ int main(int argc , char *argv[])
 				if ((valread = read( sd , buffer, 1024)) == 0)
 				{
 					getpeername(sd , (struct sockaddr*)&address , (socklen_t*)&addrlen);
-                    std::cout<<"Host disconnected: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<std::endl;
+                    std::cout<<COLOR_YELLOW"Host disconnected: "<<new_socket<<" on ip: "<<inet_ntoa(address.sin_addr)<<" port: "<<ntohs(address.sin_port)<<COLOR_RESET<<std::endl;
 					close( sd );
 					client_socket[i] = 0;
 				}
@@ -180,13 +189,13 @@ int main(int argc , char *argv[])
                     for(int j=2; j<res.size(); j++) msg_body.push_back(res[j]);
 
                     if(msg_type==1){
-                        std::cout<<"Message recieved from client: "<<sd<<" :"<<msg_body<<std::endl;
+                        std::cout<<COLOR_BLUE<<"Message recieved from client "<<i<<COLOR_GREEN<<" :"<<msg_body<<COLOR_RESET<<std::endl;
                         send(sd, "message recieved by server", 27, 0);
                     }else if(msg_type==2){
-                        std::cout<<"Acknowledgement recieved from client: "<<sd<<" "<<msg_body<<std::endl;
+                        std::cout<<COLOR_BLUE<<"Acknowledgement recieved from client "<<i<<COLOR_GREEN<<" :"<<msg_body<<COLOR_RESET<<std::endl;
                         send(sd, "acknowledgement recieved", 25, 0);
                     }else if(msg_type==3){
-                        std::cout<<"Received close communication from client: "<<sd<<" "<<msg_body<<std::endl;
+                        std::cout<<COLOR_BLUE<<"Received close communication from client "<<i<<COLOR_GREEN<<" :"<<msg_body<<COLOR_RESET<<std::endl;
                         close(sd);
                         client_socket[i]=0;
                     }

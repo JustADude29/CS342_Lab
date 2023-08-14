@@ -54,7 +54,6 @@ int main(int argc, char *argv[]) {
         std::cout << COLOR_YELLOW << "Server acknowledgement: " << buffer << COLOR_RESET << std::endl;
     }
 
-    bool first = true;
     while (1) {
         FD_ZERO(&readfds);
         FD_SET(sock, &readfds);
@@ -68,10 +67,11 @@ int main(int argc, char *argv[]) {
 
         if (FD_ISSET(STDIN_FILENO, &readfds)) {
             int siz = read(STDIN_FILENO, buffer, MSG_LEN);
+            LOG(buffer);
             if (strcmp(buffer, "/exit\n") == 0) break;
             buffer[siz] = '\0';
             send(sock, buffer, strlen(buffer), 0);
-            LOG(COLOR_GREEN + std::string("Sent message") + COLOR_RESET);
+            LOG(COLOR_GREEN + std::string("Sent message to server") + COLOR_RESET);
             LOG("");
         } else {
             int siz = read(sock, buffer, MSG_LEN);
@@ -79,13 +79,13 @@ int main(int argc, char *argv[]) {
             std::string s;
             for(int j=2; j<strlen(buffer); j++) s.push_back(buffer[j]);
             if (siz > 0) {
-                LOG(COLOR_GREEN + s + COLOR_RESET);
+                LOG(COLOR_BLUE + std::string("Recieved message from server: ") + COLOR_GREEN + s + COLOR_RESET);
             } else break;
         }
     }
 
     close(sock);
-    std::cout << COLOR_YELLOW << "Connection closed" << COLOR_RESET << std::endl;
+    std::cout << COLOR_RED << "Connection closed" << COLOR_RESET << std::endl;
 
     return 0;
 }

@@ -65,10 +65,13 @@ int main(int argc , char *argv[])
 		return -1;
 	}
 
+	std::cout<<COLOR_BLUE<<"Format to send messages:"<<COLOR_YELLOW<<std::endl;
+	std::cout<<"<client_index> <msg_body>"<<std::endl;
+	std::cout<<"/exit to shut down server"<<COLOR_RESET<<std::endl;
+
 	addrlen = sizeof(address);
 	std::cout<<COLOR_BLUE<<"Waiting for connections"<<COLOR_RESET<<std::endl;
-		
-	bool first = true;
+
 	while(1){
 		FD_ZERO(&readfds);
 
@@ -98,9 +101,12 @@ int main(int argc , char *argv[])
 			buffer[valread]='\0';
 			sd = client_socket[(int)(buffer[0]-'0')];
 			if(sd==0){
-				LOG(COLOR_RED + std::string("No user with id") + std::to_string(buffer[0]-'0') + COLOR_RESET);
+				LOG(COLOR_RED + std::string("No user with index: ") + buffer[0] + std::string(" Usage: <index> <msg>") +COLOR_RESET);
+				LOG("");
 			}else{
 				send(sd, buffer, strlen(buffer), 0);
+				LOG(COLOR_BLUE + std::string("Sent message to Client: ") + COLOR_YELLOW + buffer[0] + COLOR_RESET);
+				LOG("");
 			}
 			continue;
 		}
@@ -121,7 +127,8 @@ int main(int argc , char *argv[])
 			for (i = 0; i < max_clients; i++){
 				if( client_socket[i] == 0 ){
 					client_socket[i] = new_socket;
-					std::cout<<COLOR_BLUE<<"Adding to socket list at: "	<<i<<COLOR_RESET<<std::endl;
+					std::cout<<COLOR_BLUE<<"Adding to socket list at index: "	<<i<<COLOR_RESET<<std::endl;
+					std::cout<<std::endl;
 					break;
 				}
 			}
@@ -140,8 +147,7 @@ int main(int argc , char *argv[])
 
 				else{
 					buffer[valread] = '\0';
-					std::cout<<COLOR_BLUE<<"Recieved message: "<<COLOR_RESET<<COLOR_GREEN<<buffer<<COLOR_RESET;
-					std::cout<<COLOR_RESET;
+					std::cout<<COLOR_BLUE<<"Recieved message from "<<COLOR_YELLOW<<"Client "<<i<<": "<<COLOR_GREEN<<buffer<<COLOR_RESET<<std::endl;
 				}
 			}
 
